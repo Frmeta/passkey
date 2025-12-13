@@ -1,0 +1,142 @@
+# -------------------
+# 1. Config & Secrets
+# -------------------
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+type: Opaque
+stringData:
+  mysql-root-password: "my-secret-pw"
+  session-secret: "secret123"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init-script
+data:
+  init-db.sql: |
+    CREATE TABLE IF NOT EXISTS users
+    (
+        id       VARCHAR(255) PRIMARY KEY,
+        username VARCHAR(255) NOT NULL UNIQUE
+    );
+    
+    CREATE TABLE IF NOT EXISTS credentials
+    (
+        id            INT AUTO_INCREMENT PRIMARY KEY,
+        user_id       VARCHAR(255) NOT NULL,
+        credential_id VARCHAR(255) NOT NULL,
+        public_key    TEXT         NOT NULL,
+        counter       INT          NOT NULL,
+        transports    VARCHAR(255),
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    );
+
+# -------------------
+# 2. Database Layer
+# -------------------
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        args: ["--default-authentication-plugin=mysql_native_password"]
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: mysql-root-password
+        - name: MYSQL_DATABASE
+          value: webauthn_db
+        volumeMounts:
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d/init-db.sql
+          subPath: init-db.sql
+      volumes:
+      - name: init-script
+        configMap:
+          name: db-init-script
+
+# -------------------
+# 3. Application Layer
+# -------------------
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: webauthn-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webauthn-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webauthn-app
+  template:
+    metadata:
+      labels:
+        app: webauthn-app
+    spec:
+      containers:
+      - name: webauthn-app
+        # REMINDER: You must build and push this image first!
+        image: your-dockerhub-username/your-app-image:latest 
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_HOST
+          value: "db"
+        - name: DB_USER
+          value: "root"
+        - name: DB_NAME
+          value: "webauthn_db"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: mysql-root-password
+        - name: SESSION_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: session-secret

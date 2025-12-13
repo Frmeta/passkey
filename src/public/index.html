@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Passkey Tutorial</title>
+        <link rel="stylesheet" href="css/style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <h1>Passkey Tutorial</h1>
+            <div id="message"></div>
+ 
+            <div id="auth-container" class="input-group">
+                <input type="text" id="username" placeholder="Enter username" />
+                <button id="registerButton">Register</button>
+                <button id="loginButton">Login</button>
+            </div>
+
+            <div id="calculator-container" style="display: none; text-align: center; margin-top: 20px;">
+                <h2>Circle Calculator</h2>
+                <div class="input-group" style="justify-content: center; margin-bottom: 10px;">
+                    <input type="number" id="circleRadius" placeholder="Enter radius" />
+                </div>
+                <div class="input-group" style="justify-content: center;">
+                    <button id="calcAreaBtn">Calculate Area</button>
+                    <button id="calcPerimeterBtn">Calculate Perimeter</button>
+                </div>
+                <div id="calcResult" style="margin-top: 15px; font-weight: bold; font-size: 1.2em;"></div>
+                <button id="logoutBtn" style="margin-top: 20px; background-color: #f44336;">Logout</button>
+            </div>
+        </div>
+ 
+        <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.es5.umd.min.js"></script>
+        <script src="js/script.js"></script>
+    </body>
+</html>
