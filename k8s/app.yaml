@@ -120,7 +120,11 @@ spec:
       containers:
       - name: webauthn-app
         # REMINDER: You must build and push this image first!
-        image: your-dockerhub-username/your-app-image:latest 
+        # CHANGE 1: Use the local tag you just built
+        image: frmeta/passkey-tutorial:latest 
+        # CHANGE 2: Force K8s to look locally, not online
+        imagePullPolicy: Always
+          #   image: your-dockerhub-username/your-app-image:latest 
         ports:
         - containerPort: 8080
         env:
@@ -140,3 +144,5 @@ spec:
             secretKeyRef:
               name: app-secrets
               key: session-secret
+        # - name: RP_ID
+        #   value: "52.87.186.227.nip.io"
